@@ -27,6 +27,22 @@ const storeRefreshToken = async (userId, refreshToken) => {
   ); // 7days
 };
 
+const setCookies = (res, accessToken, refreshToken) => {
+  res.cookie("access-token", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    samesite: "strict",
+    maxAge: 15 * 60 * 1000,
+  });
+
+  res.cookie("refresh-token", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    samesite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
 //SIGNUP
 export const signUp = async (req, res) => {
   const { username, email, password } = req.body;
@@ -35,16 +51,20 @@ export const signUp = async (req, res) => {
 
     if (userExists) res.status(401).json({ message: "User Already Exists" });
     const user = await User.create({ username, email, password });
-    res
-      .status(400)
-      .json({ data: user, message: "New User Created Successfully" });
-    console.log("User Saved SUCCESFULLY");
 
     //Generating Tokens
     const { accessToken, refreshToken } = generateTokens(user._id);
 
     //Storing Refresh token
     await storeRefreshToken(user._id, refreshToken);
+
+    //Setting Cookies
+    setCookies(res, accessToken, refreshToken);
+    res.status(400).json({
+      data: user,
+      message: "New User Created Successfully",
+    });
+    console.log("User Saved SUCCESFULLY");
   } catch (error) {
     res.status(400).json({ message: "Something went wrong.", error: error });
     console.log(error);
