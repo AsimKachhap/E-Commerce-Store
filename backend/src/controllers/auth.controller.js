@@ -14,7 +14,6 @@ const generateTokens = (userId) => {
     process.env.JWT_REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" }
   );
-
   return { accessToken, refreshToken };
 };
 
@@ -77,6 +76,19 @@ export const login = async (req, res) => {
   res.send("Login route got a hit");
 };
 
+//LOGOUT
 export const logout = async (req, res) => {
-  res.send("Logout route got a hit");
+  try {
+    const refreshToken = req.cookies["refresh-token"];
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_TOKEN_SECRET
+    );
+    await redis.del(`refresh_token:${decoded.userId}`);
+    res.clearCookie("access-token");
+    res.clearCookie("refresh-token");
+    res.status(200).json({ message: "Logged out Successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
 };
