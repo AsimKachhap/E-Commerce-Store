@@ -1,4 +1,31 @@
 import User from "../models/user.model.js";
+import { redis } from "../utils/redis.js";
+import jwt from "jsonwebtoken";
+
+const generateTokens = (userId) => {
+  const accessToken = jwt.sign(
+    { userId },
+    process.env.JWT_ACCESS_TOKEN_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_TOKEN_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return { accessToken, refreshToken };
+};
+
+const storeRefreshToken = async (userId, refreshToken) => {
+  await redis.set(
+    `refresh_token:${userId}`,
+    refreshToken,
+    "EX",
+    7 * 24 * 60 * 60
+  ); // 7days
+};
 
 //SIGNUP
 export const signUp = async (req, res) => {
@@ -12,6 +39,12 @@ export const signUp = async (req, res) => {
       .status(400)
       .json({ data: user, message: "New User Created Successfully" });
     console.log("User Saved SUCCESFULLY");
+
+    //Generating Tokens
+    const { accessToken, refreshToken } = generateTokens(user._id);
+
+    //Storing Refresh token
+    await storeRefreshToken(user._id, refreshToken);
   } catch (error) {
     res.status(400).json({ message: "Something went wrong.", error: error });
     console.log(error);
