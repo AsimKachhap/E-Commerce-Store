@@ -18,12 +18,9 @@ const generateTokens = (userId) => {
 };
 
 const storeRefreshToken = async (userId, refreshToken) => {
-  await redis.set(
-    `refresh_token:${userId}`,
-    refreshToken,
-    "EX",
-    7 * 24 * 60 * 60
-  ); // 7days
+  await redis.set(`refresh_token:${userId}`, refreshToken, {
+    EX: 7 * 24 * 60 * 60,
+  }); // 7days
 };
 
 const setCookies = (res, accessToken, refreshToken) => {
@@ -83,7 +80,7 @@ export const login = async (req, res) => {
       setCookies(res, accessToken, refreshToken);
       res.status(200).json({ message: "Logged in Successfully." });
     } else {
-      res.status(400).json({ message: "Email or Password Incorrect." });
+      res.status(401).json({ message: "Email or Password Incorrect." });
     }
   } catch (error) {
     res
