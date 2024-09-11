@@ -65,7 +65,7 @@ export const signUp = async (req, res) => {
     });
     console.log("User Saved SUCCESFULLY");
   } catch (error) {
-    res.status(400).json({ message: "Something went wrong.", error: error });
+    res.status(500).json({ message: "Something went wrong.", error: error });
     console.log(error);
   }
 };
@@ -73,7 +73,24 @@ export const signUp = async (req, res) => {
 //LOGIN
 
 export const login = async (req, res) => {
-  res.send("Login route got a hit");
+  const { email, password } = req.body;
+  console.log(email, password);
+  try {
+    const user = await User.findOne({ email });
+    if (user && (await user.comparePassword(password))) {
+      const { accessToken, refreshToken } = generateTokens(user._id);
+      await storeRefreshToken(user.id, refreshToken);
+      setCookies(res, accessToken, refreshToken);
+      res.status(200).json({ message: "Logged in Successfully." });
+    } else {
+      res.status(400).json({ message: "Email or Password Incorrect." });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Something went wrong.", error: error.message });
+    console.log(error);
+  }
 };
 
 //LOGOUT
