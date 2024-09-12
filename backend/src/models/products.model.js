@@ -39,3 +39,5 @@ const ProductSchecma = mongoose.Schema(
 );
 
 const Product = mongoose.model("Prodeuct", ProductSchecma);
+
+export default Product;
