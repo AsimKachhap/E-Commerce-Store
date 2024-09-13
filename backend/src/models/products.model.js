@@ -30,7 +30,7 @@ const ProductSchecma = mongoose.Schema(
         default: "Others",
       },
     ],
-    featured: {
+    isFeatured: {
       type: Boolean,
       default: false,
     },
@@ -38,6 +38,6 @@ const ProductSchecma = mongoose.Schema(
   { timestamps: true }
 );
 
-const Product = mongoose.model("Prodeuct", ProductSchecma);
+const Product = mongoose.model("Product", ProductSchecma);
 
 export default Product;
