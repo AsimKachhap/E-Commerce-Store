@@ -2,7 +2,21 @@ import Product from "../models/products.model.js";
 import { redis } from "../utils/redis.js";
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js";
 
-export const getAllProducts = () => {};
+// GET ALL PRODUCTS
+export const getAllProducts = async (req, res) => {
+  try {
+    const allProducts = await Product.find({});
+    res.status(200).json({
+      message: "Successfully fetched all products",
+      data: allProducts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong duringg fetching all products.",
+      error: error.msg,
+    });
+  }
+};
 
 export const getFeaturedProducts = async (req, res) => {
   try {
