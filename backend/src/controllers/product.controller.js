@@ -18,36 +18,44 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+// GET FEATURED PRODUCTS
+
 export const getFeaturedProducts = async (req, res) => {
   try {
-    const featuredProducts = await redis.get("featuredProducts");
+    const redisFeaturedProducts = await redis.get("featuredProducts"); // Handle the case when redis returns square brackets "[]"
 
-    if (featuredProducts) {
-      res.status(200).json(JSON.parse(featuredProducts)); // Redis stores objects in plain string
+    if (!(redisFeaturedProducts === null)) {
+      console.log("You are getting a redis response.");
+      res.status(200).json(JSON.parse(redisFeaturedProducts)); // Redis stores objects in plain string
     } else {
       try {
+        // FETCH FEATURED PRODUCTS FROM DB AND SET IN REDIS
         const featuredProducts = await Product.find({
           isFeatured: true,
         }).lean();
 
-        if (!featuredProducts) {
-          res.status(404).jsoon({ message: "No Featured Prooducts found." });
+        console.log("Db:", featuredProducts.length);
+
+        if (featuredProducts.length < 1) {
+          return res
+            .status(404)
+            .json({ message: "No Featured Products found." });
         }
-        // set Featured Products in Redis for Feature use
 
         await redis.set("featuredProducts", JSON.stringify(featuredProducts));
         res.status(200).json(featuredProducts);
       } catch (error) {
         res.status(500).json({
-          essage:
+          message:
             "Something went wrong while fetching Featured Products from from DB",
         });
       }
     }
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Something went wron while getting Featured Products" });
+    res.status(500).json({
+      message: "Something went wrong while getting Featured Products",
+      error: error.message,
+    });
   }
 };
 
