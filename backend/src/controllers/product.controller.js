@@ -141,17 +141,49 @@ export const getProductsByCategory = async (req, res) => {
     const { category } = req.params;
 
     const products = await Product.find({ category });
-    res
-      .status(200)
-      .json({
-        message: "Products fetched successfully by the category",
-        data: products,
-      });
+    res.status(200).json({
+      message: "Products fetched successfully by the category",
+      data: products,
+    });
   } catch (error) {
     res.status(500).json({
       message:
         "Something went wrong on server while getting products by category.",
       error: error.message,
     });
+  }
+};
+
+// TOGGLING FEATURED PRODUCTS
+
+export const toggleFeaturedProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (product) {
+      product.isFeatured = !product.isFeatured;
+      const updatedProduct = await product.save();
+      res.status(200).json({ data: updatedProduct });
+      // Update Redis Cache
+      await updateFeaturedProductCache();
+    } else {
+      res.status(404).json({ messagge: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "Something went wrong on Server while toggling featured products.",
+      error: error.message,
+    });
+  }
+};
+
+// UPADTE FEATURED PRODUCTS ON REDIS CACHE
+
+const updateFeaturedProductCache = async () => {
+  try {
+    const featuredProducts = await Product.find({ isFeatured: true }).lean();
+    await redis.set("featuredProducts", JSON.stringify(featuredProducts));
+  } catch (error) {
+    console.log("Error while updating featured product in Redis.", error);
   }
 };
