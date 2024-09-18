@@ -30,7 +30,6 @@ export const protectRoute = async (req, res, next) => {
 
 export const isAdmin = async (req, res, next) => {
   const user = await User.find({ _id: req.user.userId });
-  console.log("User:", user);
   if (!user.role === "admin") {
     return res.status(403).json({
       message: "Unauthorized Access : Only Admins are allowed on this route.",
