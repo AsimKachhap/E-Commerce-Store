@@ -135,3 +135,23 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+
+export const getProductsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const products = await Product.find({ category });
+    res
+      .status(200)
+      .json({
+        message: "Products fetched successfully by the category",
+        data: products,
+      });
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "Something went wrong on server while getting products by category.",
+      error: error.message,
+    });
+  }
+};
