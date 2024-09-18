@@ -1,5 +1,6 @@
 import Product from "../models/products.model.js";
 import { redis } from "../utils/redis.js";
+import cloudinary from "../utils/cloudinary.js";
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js";
 
 // GET ALL PRODUCTS
@@ -78,7 +79,7 @@ export const addProduct = async (req, res) => {
             category: category,
             featured: Boolean(featured),
           });
-          console.log(product);
+
           res
             .status(201)
             .json({ message: "Product saved Successfully", data: product });
@@ -101,6 +102,35 @@ export const addProduct = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong oon server",
+      error: error.message,
+    });
+  }
+};
+
+// DELETING A PRODUCT
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findOne({ _id: req.params.id });
+
+    if (product) {
+      await Product.deleteOne({ _id: req.params.id });
+      // DELETE THE PRODUCT'S IMAGE FROM CLOUDINARY
+
+      const publicId = product.image.split("/").pop(0).split(".")[0];
+
+      const result = await cloudinary.uploader.destroy(
+        // Don't forget to handle errors while deleting photos from cloudinary
+        `eCommerceStore/${publicId}`
+      );
+
+      res.status(200).json({ message: "Product deleted Successfully" });
+    } else {
+      res.status(404).json({ message: "No such product found." });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong on server while deleting a product.",
       error: error.message,
     });
   }
