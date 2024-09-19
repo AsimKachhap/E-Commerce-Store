@@ -33,3 +33,43 @@ export const addToCart = async (req, res) => {
     });
   }
 };
+
+export const updateQuantity = async (req, res) => {
+  const { id: productId } = req.params; // Renaming while destructuring const {oldname: newname} = req.body
+  const { quantity } = req.body;
+  const userId = req.user.userId;
+  const user = await User.findById(userId);
+  const existingItem = user.cartItems.find((item) => item?.id === productId);
+
+  try {
+    if (existingItem) {
+      if (quantity === 0) {
+        user.cartItems = user.cartItems.filter(
+          (item) => item?.id !== productId
+        );
+        await user.save();
+        res.status(200).json({
+          message: "Successfully Updated Cart Items",
+          data: user.cartItems,
+        });
+      }
+      existingItem.quantity = quantity;
+      await user.save();
+      res.status(200).json({
+        message: "Successfully Updated Cart Items",
+        data: user.cartItems,
+      });
+    } else {
+      return res.status(400).json({ message: "Product Not Found" });
+    }
+  } catch (error) {
+    console.log(
+      "Something went wrong while adding item to cart.",
+      error.message
+    );
+    res.status(500).json({
+      messagge: "Something went wrong on server while adding item to the cart.",
+      error: error.message,
+    });
+  }
+};
