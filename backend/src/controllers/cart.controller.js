@@ -1,5 +1,39 @@
 import User from "../models/user.model.js";
+import Product from "../models/products.model.js";
 
+// GET ALL PRODUCTS FROM THE CART
+export const getCartProducts = async (req, res) => {
+  const user = await User.findById(req.user.userId).select("-password");
+  console.log("User:", user);
+  try {
+    const products = await Product.find({ _id: { $in: user.cartItems } });
+    // Add quantity for each product
+    const cartItems = products.map((product) => {
+      const item = user.cartItems.find(
+        (cartItem) => cartItem?.id === product.id
+      );
+      return {
+        ...product.toJSON(),
+        quantity: item.quantity,
+      };
+    });
+    res
+      .status(200)
+      .json({
+        message: "Successfully fetched Cart Products.",
+        data: cartItems,
+      });
+  } catch (error) {
+    console.log("Error in getCartProduct Controller", error.message);
+    res.status(500).json({
+      message:
+        "Something went wrong on server while getting all products from the cart.",
+      error: error.message,
+    });
+  }
+};
+
+// ADD PRODUCT TO CART
 export const addToCart = async (req, res) => {
   try {
     const { productId } = req.body; // ************* Don't forget to handle the case when req comes without productId. Currentl null is getting pushe into the cartItems []. ********** //
@@ -34,6 +68,7 @@ export const addToCart = async (req, res) => {
   }
 };
 
+// UPDATE PRODUCT QUANTITY IN CART
 export const updateQuantity = async (req, res) => {
   const { id: productId } = req.params; // Renaming while destructuring const {oldname: newname} = req.body
   const { quantity } = req.body;
