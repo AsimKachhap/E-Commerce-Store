@@ -48,14 +48,14 @@ export const updateQuantity = async (req, res) => {
           (item) => item?.id !== productId
         );
         await user.save();
-        res.status(200).json({
+        return res.status(200).json({
           message: "Successfully Updated Cart Items",
           data: user.cartItems,
         });
       }
       existingItem.quantity = quantity;
       await user.save();
-      res.status(200).json({
+      return res.status(200).json({
         message: "Successfully Updated Cart Items",
         data: user.cartItems,
       });
